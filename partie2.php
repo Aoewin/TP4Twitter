@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL);
+ini_set("display_errors", 1);
 require_once('TwitterAPIExchange.php');
 
 /** Set access tokens here - see: https://dev.twitter.com/apps/ **/
@@ -9,7 +11,7 @@ $settings = array(
     'consumer_secret' => "MkZUab2ImuN3CH9xLhb8Afuqfi66BFNBYl5R80qKBsVZN2pVvf"
 );
 
-$url = "https://api.twitter.com/1.1/statuses/user_timeline.json";
+$urlFriends = "https://api.twitter.com/1.1/friends/list.json";
 
 $requestMethod = "GET";
 
@@ -18,18 +20,58 @@ $count=30;
 $getfield = "?screen_name=$user&count=$count";
 
 $twitter = new TwitterAPIExchange($settings);
-echo $twitter->setGetfield($getfield)
-             ->buildOauth($url, $requestMethod)
+$friendsJSON = $twitter->setGetfield($getfield)
+             ->buildOauth($urlFriends, $requestMethod)
              ->performRequest();
+
+$arrayFriends = json_decode($friendsJSON, true);
+
+$maxFriends = 0;
+$premier = NULL;
+$deuxieme = NULL;
+$troisieme = NULL;
+
+foreach ($arrayFriends["users"] as $user) {
+  if($user["followers_count"] > $maxFriends){
+    $maxFriends = $user["followers_count"];
+    $premier = $user;
+  }
+}
+$maxFriends = 0;
+foreach ($arrayFriends["users"] as $user) {
+  if($user["followers_count"] > $maxFriends && $user != $premier){
+    $maxFriends = $user["followers_count"];
+    $deuxieme = $user;
+  }
+}
+$maxFriends = 0;
+foreach ($arrayFriends["users"] as $user) {
+  if($user["followers_count"] > $maxFriends && $user != $premier && $user != $deuxieme){
+    $maxFriends = $user["followers_count"];
+    $troisieme = $user;
+  }
+}
+
+
+$followers = [];
+
+array_push($followers, $premier);
+array_push($followers, $deuxieme);
+array_push($followers, $troisieme);
 ?>
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>Parti 2</title>
+    <title>Partie 2</title>
   </head>
   <body>
-    <h1>Combien de followers : <?= $twitter['followers_count']?></h1>
+    <h1>Combien de followers : <?= sizeof($followers)?></h1>
+    <ul>
+      <?php foreach ($followers as $follower): ?>
+        <li><?= $follower['name']?> <?= $follower['screen_name']?> <?= $follower['followers_count']?></li>
+      <?php endforeach; ?>
+    </ul>
   </body>
 </html>
