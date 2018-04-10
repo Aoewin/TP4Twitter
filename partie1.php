@@ -12,6 +12,7 @@ $settings = array(
 
 $urlFriends = "https://api.twitter.com/1.1/friends/list.json";
 $urlFollowers ="https://api.twitter.com/1.1/followers/list.json";
+$urlCount = "https://api.twitter.com/1.1/users/show.json";
 
 $requestMethod = "GET";
 
@@ -20,14 +21,23 @@ $count=30;
 $getfield = "?screen_name=$user&count=$count";
 
 $twitterFriends = new TwitterAPIExchange($settings);
-$twitterFriends->setGetfield($getfield)
+$friendsJSON = $twitterFriends->setGetfield($getfield)
              ->buildOauth($urlFriends, $requestMethod)
              ->performRequest();
 
 $twitterFollowers = new TwitterAPIExchange($settings);
-$twitterFollowers->setGetfield($getfield)
+$followersJSON = $twitterFollowers->setGetfield($getfield)
                 ->buildOauth($urlFollowers, $requestMethod)
                 ->performRequest();
+
+$twitterCount = new TwitterAPIExchange($settings);
+$countJSON = $twitterCount->setGetfield($getfield)
+                ->buildOauth($urlCount, $requestMethod)
+                ->performRequest();
+
+$arrayFriends = json_decode($friendsJSON, true);
+$arrayFollowers = json_decode($followersJSON, true);
+$arrayCount = json_decode($countJSON, true);
 ?>
 
 <!DOCTYPE html>
@@ -37,18 +47,18 @@ $twitterFollowers->setGetfield($getfield)
     <title>Twitter partie 1</title>
   </head>
   <body>
-    <h1>Liste d'amis</h1>
+    <h1>Liste d'amis (<?=$arrayCount['friends_count']?>)</h1>
     <ul>
-      <?php foreach($twitterFriends as $friend['user']) { ?>
-        <li><?= $friend['screen_name'] ?> - <img src="<?= $friend['profile_image_url']?>" alt="image twitter"></li>
-      <?php } ?>
+      <?php foreach($arrayFriends['users'] as $friend) {?>
 
+        <li><?= $friend['screen_name'] ?> - <img src="<?= $friend['profile_image_url']?>"></li>
+      <?php } ?>
     </ul>
 
-    <h1>Liste de followers</h1>
+    <h1>Liste de followers (<?=$arrayCount['followers_count']?>)</h1>
     <ul>
-      <?php foreach($twitterFollowers as $follower) { ?>
-        <li><?= $follower['screen_name'] ?> - <img src="<?= $friend['profile_image_url']?>" alt="image twitter"></li>
+      <?php foreach($arrayFollowers['users'] as $follower) { ?>
+        <li><?= $follower['screen_name'] ?> - <img src="<?= $follower['profile_image_url']?>"></li>
       <?php } ?>
     </ul>
   </body>
